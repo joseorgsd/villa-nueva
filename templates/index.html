@@ -23,6 +23,13 @@
             <div class="stat-card"><h3>Valor Pipeline</h3><p style="font-size: 24px; font-weight: bold;">${{ stats.value }}</p></div>
         </div>
         
+        <div class="card">
+            <h3>Auditor Web en Vivo</h3>
+            <input type="text" id="auditUrl" placeholder="https://ejemplo.com" style="width: 70%; padding: 10px;">
+            <button onclick="runLiveAudit()">Analizar Ahora</button>
+            <div id="auditResult" style="margin-top: 20px; white-space: pre-wrap; background: #0f172a; color: #fff; padding: 15px; border-radius: 8px;"></div>
+        </div>
+
         <div class="lead-grid">
             {% for lead in leads %}
             <div class="lead-card">
@@ -41,6 +48,26 @@
             const res = await fetch(`/api/email/${id}`);
             const data = await res.json();
             window.location.href = data.mailto;
+        }
+
+        async function runLiveAudit() {
+            const url = document.getElementById('auditUrl').value;
+            if (!url) return alert('Por favor ingresa una URL');
+            
+            const resultDiv = document.getElementById('auditResult');
+            resultDiv.innerHTML = 'Analizando sitio en tiempo real... Por favor espera.';
+            
+            const res = await fetch('/api/live-audit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            });
+            const data = await res.json();
+            if (data.report) {
+                resultDiv.innerHTML = data.report;
+            } else {
+                resultDiv.innerHTML = 'Error al auditar el sitio. Verifica la URL.';
+            }
         }
     </script>
 </body>

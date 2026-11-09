@@ -104,6 +104,32 @@ def generate():
         'data': generated
     })
 
+@app.route('/api/live-audit', methods=['POST'])
+def live_audit():
+    data = request.get_json()
+    url = data.get('url')
+    if not url:
+        return jsonify({'error': 'URL requerida'}), 400
+    
+    try:
+        # Ejecutar el auditor discreto
+        # El auditor guarda en ../reports/, pero desde app.py (raíz) es ./reports/
+        subprocess.run(['python', 'tools/web_auditor.py', '--url', url], check=True)
+        
+        # Construir el nombre del archivo igual que en web_auditor.py
+        file_name = url.replace("https://", "").replace("http://", "").replace("/", "_") + "_audit.md"
+        report_path = os.path.join(os.path.dirname(__file__), 'reports', file_name)
+        
+        if os.path.exists(report_path):
+            with open(report_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return jsonify({'status': 'success', 'report': content})
+        else:
+            return jsonify({'error': 'Error al generar el reporte'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Health check
 @app.route('/health')
 def health():
